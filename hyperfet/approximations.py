@@ -55,19 +55,19 @@ def Vleft(hyperfet,VD):
     VD,VG,k,VTm,Ff,alpha,delta,V_MIT,n,Vth,I_MIT=\
         shorthands(hyperfet,VD,None,"k","VTm","Ff","alpha","delta","V_MIT","n","Vth","I_MIT",gridinput=False)
     Vleft0=VTm+(1+delta)*V_MIT-n*Vth*np.log(n*k*Vth/I_MIT)
-    return Vleft0-alpha*Vth*Ff(VD-V_MIT,Vleft0-V_MIT)
+    return Vleft0+alpha*Vth*(1-Ff(VD-V_MIT,Vleft0-V_MIT))
 
 def Vright(hyperfet,VD):
     VD,VG,VTm,delta,V_IMT,n,Vth,k,I_IMT= \
         shorthands(hyperfet,VD,None,"VTm","delta","V_IMT","n","Vth","k","I_IMT",gridinput=False)
     return VTm+(1+delta)*V_IMT-n*Vth*np.log(n*k*Vth/I_IMT)
 
-def approx_shift(hyperfet,VD):
+def shift(hyperfet,VD):
     VD,VG,app_Ioff,R_insp=shorthands(hyperfet,VD,None,"app_Ioff","R_insp",gridinput=False)
     return -app_Ioff*R_insp
 
-def approx_shiftedgain(self):
+def shiftedgain(self):
     return (1+(self._approx_Ioff*self.R_insp-self.vo2.V_met)/(self.VDD-self.VTp))/(1+self.mosfet.k*self.R_metp)
 
-def approx_shiftedsr(self):
+def shiftedsr(self):
     return (self.VDD-self.VTp)*self.mosfet.k*self.R_metp+self.vo2.V_met-self._approx_Ioff*self.R_insp

@@ -126,7 +126,7 @@ cdef class SCMOSFET:
 
     # Eq 4.5
     @cython.cdivision(True)
-    cdef double Ff(SCMOSFET self, double VD, double VG):
+    cpdef double Ff(SCMOSFET self, double VD, double VG):
         r""" Fermi inversion regime smoothing function
 
         Equation 4.5 of Ujwal's masters thesis.  If ``self.alpha`` is 0, ``Ff`` is just 0, no inversion VT shifts.

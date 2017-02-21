@@ -215,7 +215,7 @@ cdef class SCMOSFET:
         return SCMOSFET(T=e*self.Vth / kb,
                         W=self.W, Cinv_vxo=self.Cinv_vxo,
                         VT0=self.VT0+VT0_shift, alpha=self.alpha, SS=self.SS, delta=self.delta,
-                        VDsats=self.VDsats, beta=self.beta, eta=self.eta, Gleak=self.Gleak)
+                        VDsats=self.VDsats, beta=self.beta, Gleak=self.Gleak)
 
 
 r""" Represents a piecewise linear current-controlled i-v (potentially non-unique in V)

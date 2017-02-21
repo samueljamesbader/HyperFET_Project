@@ -62,12 +62,21 @@ def Vright(hyperfet,VD):
         shorthands(hyperfet,VD,None,"VTm","delta","V_IMT","n","Vth","k","I_IMT",gridinput=False)
     return VTm+(1+delta)*V_IMT-n*Vth*np.log(n*k*Vth/I_IMT)
 
-def shift(hyperfet,VD):
+def shift(hyperfet,VD,boundary='clipapprox'):
     VD,VG,app_Ioff,R_insp=shorthands(hyperfet,VD,None,"app_Ioff","R_insp",gridinput=False)
-    return -app_Ioff*R_insp
+    shift=-app_Ioff*R_insp
+    return shift
+    #if boundary=='clipapprox':
+    #    max1=Vright(hyperfet,VD)
+    #    if +shift > VD:
+    #        return None
+    #    else:
+    #        return shift
 
-def shiftedgain(self):
-    return (1+(self._approx_Ioff*self.R_insp-self.vo2.V_met)/(self.VDD-self.VTp))/(1+self.mosfet.k*self.R_metp)
+def shiftedgain(hyperfet,VDD):
+    VD,VG,app_Ioff,R_insp,V_met,VTp,k,R_metp=\
+        shorthands(hyperfet,VDD,None,"app_Ioff","R_insp","V_met","VTp","k","R_metp",gridinput=False)
+    return (1+(app_Ioff*R_insp-V_met)/(VDD-VTp))/(1+k*R_metp)
 
 def shiftedsr(self):
     return (self.VDD-self.VTp)*self.mosfet.k*self.R_metp+self.vo2.V_met-self._approx_Ioff*self.R_insp

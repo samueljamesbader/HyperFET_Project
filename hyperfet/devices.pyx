@@ -218,28 +218,18 @@ cdef class SCMOSFET:
                         VDsats=self.VDsats, beta=self.beta, Gleak=self.Gleak)
 
 
-r""" Represents a piecewise linear current-controlled i-v (potentially non-unique in V)
-
-"Lower i-v" passes through origin.  Higher i-v may have an offset voltage.
-
-I_trans: current transition point between the linear i-v regions
-R_low: resistance in the lower i-v region
-R_high: resistance in the higher i-v region
-V_off_high: voltage offset (ie V-intercept) for the higher i-v region
-"""
-cdef struct PiecewiseLinearVI:
-    double I_trans
-    double R_low
-    double R_high
-    double V_off_high
 
 r""" For sweep directions"""
 cpdef enum Direction:
     FORWARD = 0
     BACKWARD = 1
 
+cdef struct PCRDir:
+    void* pcr
+    Direction direc
+
 cdef class PCR:
-    r""" Models a phase-change resistor by two piecewise linear i-v's, one for forward bias, one for reverse.
+    r""" Models a phase-change resistor by two piecewise linear i-v's
 
     R_met should not be zero.  (This may be relaxed in the future.)
 
@@ -251,7 +241,6 @@ cdef class PCR:
     """
 
     cdef public double I_IMT, I_MIT, V_IMT, V_MIT, R_ins, V_met, R_met, I_smooth
-    cdef PiecewiseLinearVI[2] VIs
 
     @cython.cdivision(True)
     def __init__(PCR self, double I_IMT=.01e-3, double V_IMT=1, double I_MIT=.0075e-3, double V_MIT=.5, double R_met=0):
@@ -266,11 +255,6 @@ cdef class PCR:
 
         assert R_met!=0
 
-        self.VIs[<int> Direction.FORWARD]= \
-                PiecewiseLinearVI(I_trans=self.I_IMT,R_low=self.R_ins,R_high=self.R_met,V_off_high=self.V_met)
-        self.VIs[<int> Direction.BACKWARD]= \
-                PiecewiseLinearVI(I_trans=self.I_MIT,R_low=self.R_ins,R_high=self.R_met,V_off_high=self.V_met)
-
     @staticmethod
     cdef double _V(double i,void* args):
         r""" Voltage as a function of current for scalar inputs
@@ -280,28 +264,39 @@ cdef class PCR:
         it is formally declared static, with a ``PiecewiseLinearVI*`` passed via the ``args`` parameter.
 
         :param i: (scalar double) the current
-        :param args: pointer to the appropriate ``PiecewiseLinearVI``, cast as void*
+        :param direc: ``Direction.FORWARD`` or ``Direction.BACKWARD``
         :return: (scalar double) the voltage
         """
-        cdef PiecewiseLinearVI vi
-        vi=(<PiecewiseLinearVI*>args)[0]
-        if i<vi.I_trans:
-            return i*vi.R_low
+        cdef PCRDir* pd
+        cdef PCR self
+        pd=<PCRDir*> args
+        self=<PCR>pd.pcr
+
+        if pd.direc==Direction.FORWARD:
+            if i<self.I_IMT:
+                return i*self.R_ins
+            elif i>self.I_MIT:
+                return i*self.R_met+self.V_met
+            else:
+                return np.NaN
         else:
-            return i*vi.R_high+vi.V_off_high
+            if i>self.I_MIT:
+                return i*self.R_met+self.V_met
+            elif i<self.I_IMT:
+                return i*self.R_ins
+            else:
+                return np.NaN
 
     @cython.boundscheck(False)
     def V(PCR self, I, Direction direc):
         r""" Compute the drain current.
 
-        Forms a meshgrid from the combinations of ``VD`` (varies along rows) and ``VG`` varies along columns and
-        computes the drain current in a matching shape.
-
         :param I: (numpy double array) currents
         :param direc: ``Direction.FORWARD`` or ``Direction.BACKWARD`` indicating the sweep
         :return: numpy double array of of voltages, same shape as ``I``
         """
-        return dimsimple(np.asarray(I,dtype='double'), PCR._V, <void*>&(self.VIs[<int>direc]))
+        cdef PCRDir pcrdir=PCRDir(pcr=<void*>self,direc=direc)
+        return dimsimple(np.asarray(I,dtype='double'), PCR._V, <void*>&pcrdir)
 
 
 
@@ -342,17 +337,11 @@ cdef class HyperFET:
         :return: a valid positive current on the insulating branch, or -1 if no solution
         """
 
-        # The appropriate piecewise linear i-v
-        rVI=self.pcr.VIs[<int>direc]
+        cdef PCR pcr=self.pcr
+        cdef double imax
 
-        # the upper limiting allowed current as given by the transition current
-        imax_r=rVI.I_trans
-
-        # the upper limiting allowed current as given by requiring a positive voltage drop on the transistor
-        imax_vd=VD/rVI.R_low
-
-        # Tak the tightest of the limits
-        imax=min(imax_r,imax_vd)
+        # Take the tightest of the two limits (1) the transition current, and (2) the VDSi=0 current
+        imax=min(pcr.I_IMT,VD/pcr.R_ins)
 
         # The error function for this problem is:
         # Given a trial current, compute the VO2 voltage; then, given that voltage, compute the transistor current
@@ -362,7 +351,7 @@ cdef class HyperFET:
         def ierr( double log_i_try, HyperFET self, double VD, double VG):
             cdef double i_try, v_r, i_calc
             i_try=exp(log_i_try)
-            v_r=i_try*rVI.R_low
+            v_r=i_try*pcr.R_ins
             i_calc=SCMOSFET._ID(VD - v_r, VG - v_r, <void*>(self.mosfet))
             return log(i_calc)-log_i_try
 
@@ -370,7 +359,7 @@ cdef class HyperFET:
         logimin=-50
 
         # Safe upper current limit to make sure we never pass a negative VD
-        logimax=log(imax*.9999)
+        logimax=log(imax*.999999)
 
         # Check that the root finding will not be limited by this lower current limit
         if(ierr(logimin,self,VD,VG)<0):
@@ -383,10 +372,10 @@ cdef class HyperFET:
             return -1
 
         # Find the root, and, if it's been identified to sufficient precision, return it
-        x=brentq(ierr,logimin,logimax,args=(self,VD,VG),xtol=1e-5,rtol=1e-5)
+        x=brentq(ierr,logimin,logimax,args=(self,VD,VG),xtol=1e-10,rtol=1e-10)
         if abs(ierr(x,self,VD,VG))< .001:
             return exp(x)
-        else: return -1
+        else: return -2
 
     cdef double _I_high(HyperFET self, double VD, double VG, Direction direc) except -2:
         r""" Returns the solution current along the upper (metallic) branch if one exists at this ``VD,VG``.
@@ -397,14 +386,14 @@ cdef class HyperFET:
         :return: a valid positive current on the metallic branch, or -1 if no solution
         """
 
-        # The appropriate piecewise linear i-v
-        rVI=self.pcr.VIs[<int>direc]
+        cdef PCR pcr=self.pcr
+        cdef double imin,imax
 
         # the lower limiting allowed current as given by the transition current
-        imin=rVI.I_trans
+        imin=pcr.I_MIT
 
         # the upper limiting allowed current as given by requiring a positive voltage drop on the transistor
-        imax=(VD-rVI.V_off_high)/rVI.R_high
+        imax=(VD-pcr.V_met)/pcr.R_met
 
         # The error function for this problem is:
         # Given a trial current, compute the VO2 voltage; then, given that voltage, compute the transistor current
@@ -414,7 +403,7 @@ cdef class HyperFET:
         def ierr( double log_i_try, HyperFET self, double VD, double VG):
             cdef double i_try, v_r
             i_try=exp(log_i_try)
-            v_r=i_try*rVI.R_high+rVI.V_off_high
+            v_r=i_try*pcr.R_met+pcr.V_met
             i_calc=SCMOSFET._ID(VD - v_r, VG - v_r, <void*>(self.mosfet))
             return log(i_calc)-log_i_try
 
@@ -422,7 +411,7 @@ cdef class HyperFET:
         logimin=log(imin)
 
         # Safe upper current limit to make sure we never pass a negative VD
-        logimax=log(.9999*imax)
+        logimax=log(.999999*imax)
 
         # If the root finding is limiting by the transition current, there is no solution in this branch
         if(ierr(logimin,self,VD,VG)<0):
@@ -435,7 +424,7 @@ cdef class HyperFET:
             return -2
 
         # Find the root, and, if it's been identified to sufficient precision, return it
-        x,r=brentq(ierr,logimin,logimax,args=(self,VD,VG),xtol=1e-5,rtol=1e-5,full_output=True)
+        x,r=brentq(ierr,logimin,logimax,args=(self,VD,VG),xtol=1e-10,rtol=1e-10,full_output=True)
         if abs(ierr(x,self,VD,VG))< .001:
             return exp(x)
         else: return -1
@@ -461,7 +450,10 @@ cdef class HyperFET:
         cdef double vd_prev, vg_prev, i_prev, i_trans, vd, vg
 
         # transition between branches
-        i_trans=self.pcr.VIs[<int>direc].I_trans
+        if direc==Direction.FORWARD:
+            i_trans=self.pcr.I_IMT
+        else:
+            i_trans=self.pcr.I_MIT
 
         # i_prev will track the previously computed current.
         # depending on the sweep direction, if i_prev is strictly larger/smaller than i_trans, certain branches may

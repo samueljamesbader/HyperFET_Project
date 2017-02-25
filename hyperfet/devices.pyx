@@ -306,7 +306,7 @@ cdef class PCR:
 # J_MIT=si("1e6 A/cm^2")
 # J_IMT=si("1e5 A/cm^2")
 # Makes a VO2 resistor of a given length and width
-def VO2(W,L,T,V_met=0,rho_m=1e-6,rho_i=2e-2,J_MIT=1e10,J_IMT=1e9):
+def VO2(W,L,T,v_met=0,rho_m=1e-6,rho_i=2e-2,J_MIT=1e10,J_IMT=1e9):
     I_IMT=J_IMT*T*W
     I_MIT=J_MIT*T*W
 
@@ -314,6 +314,7 @@ def VO2(W,L,T,V_met=0,rho_m=1e-6,rho_i=2e-2,J_MIT=1e10,J_IMT=1e9):
     R_met=rho_m*L/(W*T)
 
     V_IMT=I_IMT*R_ins
+    V_met=v_met*L
     V_MIT=I_MIT*R_met+V_met
 
     return PCR(I_IMT=I_IMT, V_IMT=V_IMT, I_MIT=I_MIT, V_MIT=V_MIT, R_met=R_met)
@@ -462,7 +463,7 @@ cdef class HyperFET:
         i_prev=i_trans
 
         # Form input/output arrays
-        VDgrid,VGgrid=np.meshgrid(VD,VG)
+        VDgrid,VGgrid=np.meshgrid(np.asarray(VD,dtype='double'),np.asarray(VG,dtype='double'))
         I = np.empty_like(VDgrid)
         it = np.nditer([VDgrid,VGgrid,I], flags=['external_loop','buffered'],
                        op_flags=[['readwrite'], ['readwrite'], ['readwrite']])
@@ -534,6 +535,8 @@ cdef class HyperFET:
         :param VG: numpy double array of gate voltage
         :return: 2D numpy double array of the current values along the ``VD-VG`` grid
         """
+        VD=np.asarray(VD,dtype='double')
+        VG=np.asarray(VG,dtype='double')
         def rev(arr):
             if len(arr.shape)>0:
                 arr=np.flipud(arr)

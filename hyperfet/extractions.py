@@ -16,7 +16,7 @@ def is_point_hysteretic(hyperfet,VD,VG):
     return not np.isclose(If,Ib)
 
 def boundaries_nonhysteretic(hyperfet,VDD):
-    return not (is_point_hysteretic(hyperfet,VDD,0) and is_point_hysteretic(hyperfet,VDD,VDD))
+    return not (is_point_hysteretic(hyperfet,VDD,0) or is_point_hysteretic(hyperfet,VDD,VDD))
 
 def shift(VG,hyperfet,If,Ib,I,VDD):
     Vl=left(VG,If,Ib)[0]

@@ -62,6 +62,11 @@ def Vright(hyperfet,VD):
         shorthands(hyperfet,VD,None,"VTm","delta","V_IMT","n","Vth","k","I_IMT",gridinput=False)
     return VTm+(1+delta)*V_IMT-n*Vth*np.log(n*k*Vth/I_IMT)
 
+def Ill(hyperfet,VD):
+    VD,VG,n,Vth,R_insp,I_MIT,V_MIT=\
+        shorthands(hyperfet,VD,None,"n","Vth","R_insp","I_MIT","V_MIT",gridinput=None)
+    return (n*Vth/R_insp)*lambertw((I_MIT*R_insp/(n*Vth))*np.exp(V_MIT/(n*Vth)))
+
 def shift(hyperfet,VD,boundary='clipapprox'):
     VD,VG,app_Ioff,R_insp=shorthands(hyperfet,VD,None,"app_Ioff","R_insp",gridinput=False)
     shift=-app_Ioff*R_insp
@@ -78,5 +83,24 @@ def shiftedgain(hyperfet,VDD):
         shorthands(hyperfet,VDD,None,"app_Ioff","R_insp","V_met","VTp","k","R_metp",gridinput=False)
     return (1+(app_Ioff*R_insp-V_met)/(VDD-VTp))/(1+k*R_metp)
 
-def shiftedsr(self):
-    return (self.VDD-self.VTp)*self.mosfet.k*self.R_metp+self.vo2.V_met-self._approx_Ioff*self.R_insp
+#def shiftedsr(self):
+    #return (self.VDD-self.VTp)*self.mosfet.k*self.R_metp+self.vo2.V_met-self._approx_Ioff*self.R_insp
+
+def optsize(fet,VDD,Ml=1,Mr=0,**vo2params):
+    VTp=fet.VT0-fet.delta*VDD
+    VTm=VTp-fet.alpha*fet.Vth
+    app_Ioff=fet.n*fet.k*fet.Vth*np.exp(-VTm/(fet.n*fet.Vth))
+    Vth=fet.Vth
+    v=vo2params
+
+    l1=(VDD-Vth/2)/(v['J_IMT']*v['rho_i'])
+    l2=((VDD-Mr*Vth-VTm+fet.n*Vth*np.log(fet.n*fet.Vth*fet.k*v['J_MIT']/(v['J_IMT']*app_Ioff)))/(v['J_IMT']*v['rho_i']*(1+fet.delta)-v['J_MIT']*v['rho_m']-v['v_met']))
+    l=min(l1,l2)
+
+    wti=(fet.n*Vth/(Ml*app_Ioff*l*v['rho_i']*(1+fet.delta)))*lambertw((v['J_MIT']*v['rho_i']*(1+fet.delta)*l/(fet.n*Vth))*np.exp((v['J_MIT']*v['rho_m']+v['v_met'])*l/(fet.n*Vth)))
+
+    l2=(VDD-Mr*Vth-VTm+fet.n*fet.Vth*np.log(fet.n*fet.k*fet.Vth*wti/v['J_IMT']))/(v['J_IMT']*v['rho_i']*(1+fet.delta))
+    l=min(l1,l2)
+
+    print(l*1e9)
+    print(1/wti*1e18)

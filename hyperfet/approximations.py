@@ -18,7 +18,8 @@ def shorthands(hyperfet, VD,VG, *args, gridinput=True):
     d['VTm']=VTm=VTp-mosfet.alpha*mosfet.Vth
     d['R_insp']=R_insp=pcr.R_ins*(1+mosfet.delta)
     d['R_metp']=R_metp=pcr.R_met*(1+mosfet.delta)
-    d['app_Ioff']=app_Ioff=mosfet.n*mosfet.k*mosfet.Vth*np.exp(-VTm/(mosfet.n*mosfet.Vth))
+    #d['app_Ioff']=app_Ioff=mosfet.n*mosfet.k*mosfet.Vth*np.exp(-VTm/(mosfet.n*mosfet.Vth))
+    d['app_Ioff']=app_Ioff=mosfet.ID(VD,0)
 
     # Assemble requested variables form above dictionary or the component devices
     res=[VD,VG]
@@ -97,10 +98,15 @@ def optsize(fet,VDD,Ml=1,Mr=0,**vo2params):
     l2=((VDD-Mr*Vth-VTm+fet.n*Vth*np.log(fet.n*fet.Vth*fet.k*v['J_MIT']/(v['J_IMT']*app_Ioff)))/(v['J_IMT']*v['rho_i']*(1+fet.delta)-v['J_MIT']*v['rho_m']-v['v_met']))
     l=min(l1,l2)
 
+    print("l1 ",l1*1e9)
+    print("l2 ",l2*1e9)
+    print("l ",l*1e9)
+
     wti=(fet.n*Vth/(Ml*app_Ioff*l*v['rho_i']*(1+fet.delta)))*lambertw((v['J_MIT']*v['rho_i']*(1+fet.delta)*l/(fet.n*Vth))*np.exp((v['J_MIT']*v['rho_m']+v['v_met'])*l/(fet.n*Vth)))
 
-    l2=(VDD-Mr*Vth-VTm+fet.n*fet.Vth*np.log(fet.n*fet.k*fet.Vth*wti/v['J_IMT']))/(v['J_IMT']*v['rho_i']*(1+fet.delta))
+    l2=(VDD-Mr*Vth-VTm+fet.n*fet.Vth*np.log(fet.n*fet.k*fet.Vth*wti/v['J_IMT']))/(v['J_IMT']*v['rho_i']*(1+fet.delta)-app_Ioff*v['rho_i']*(1+fet.delta)*wti)
+    print("l2 ",l2*1e9)
     l=min(l1,l2)
 
-    print(l*1e9)
-    print(1/wti*1e18)
+    print("l ",l*1e9)
+    print("w ",1/wti*1e18)

@@ -68,6 +68,27 @@ cdef cnp.ndarray gridinput(cnp.ndarray inarr1, cnp.ndarray inarr2,
             suboutarr[j]=func(subinarr1[j],subinarr2[j],cargs)
     return outarr
 
+@cython.boundscheck(False)
+cdef cnp.ndarray dual_broadcast(cnp.ndarray inarr1, cnp.ndarray inarr2,
+                           double (*func)(double,double,void*),void* args=nullptr,
+                           cnp.ndarray outarr=None):
+
+    cdef int j
+    cdef cnp.ndarray[double] subinarr1,subinarr2,suboutarr
+    cdef void* cargs
+
+    assert inarr1.dtype==np.float
+    assert inarr2.dtype==np.float
+
+    cargs=<void*>args
+    it = np.nditer([inarr1,inarr2,outarr], flags=['external_loop','buffered','reduce_ok'],
+                   op_flags=[['readwrite'], ['readwrite'], ['allocate','writeonly']])
+    for subinarr1,subinarr2,suboutarr in it:
+        for j in range(subinarr1.shape[0]):
+            suboutarr[j]=func(subinarr1[j],subinarr2[j],cargs)
+
+    return it.operands[2]
+
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 # Basic devices
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
@@ -154,7 +175,7 @@ cdef class SCMOSFET:
             return 1/(1+exp(exparg))
 
     @cython.cdivision(True)
-    cdef double Fsat(SCMOSFET self, double VD, double VG):
+    cpdef double Fsat(SCMOSFET self, double VD, double VG):
         r""" Saturation function (interpolate linear to constant behavior)
 
         Equation 4.6 of Ujwal's masters thesis.
@@ -209,7 +230,7 @@ cdef class SCMOSFET:
         :param VG: (numpy double array) gate voltage
         :return: 2-D numpy double array drain current
         """
-        return gridinput(np.asarray(VD,dtype='double'),np.asarray(VG,dtype='double'),self._ID,args=<void*>self)
+        return dual_broadcast(np.asarray(VD,dtype='double'),np.asarray(VG,dtype='double'),self._ID,args=<void*>self)
 
     def shifted(SCMOSFET self, VT0_shift):
         return SCMOSFET(T=e*self.Vth / kb,
@@ -463,10 +484,9 @@ cdef class HyperFET:
         i_prev=i_trans
 
         # Form input/output arrays
-        VDgrid,VGgrid=np.meshgrid(np.asarray(VD,dtype='double'),np.asarray(VG,dtype='double'))
-        I = np.empty_like(VDgrid)
-        it = np.nditer([VDgrid,VGgrid,I], flags=['external_loop','buffered'],
-                       op_flags=[['readwrite'], ['readwrite'], ['readwrite']])
+        VD,VG=np.asarray(VD,dtype='double'),np.asarray(VG,dtype='double')
+        it = np.nditer([VD,VG,None], flags=['external_loop','buffered','reduce_ok'],
+                       op_flags=[['readwrite'], ['readwrite'], ['allocate','writeonly']])
 
         # Python iterate over external chunks
         for vdarr,vgarr,iarr in it:
@@ -523,7 +543,7 @@ cdef class HyperFET:
                     else:
                         iarr[j]=np.NaN
                         #raise Exception("Solution not found")
-        return I
+        return it.operands[2]
 
     def I_double(HyperFET self, VD, VG):
         r""" Return a current sweep in both directions

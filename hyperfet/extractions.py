@@ -2,7 +2,7 @@ import numpy as np
 from hyperfet.devices import Direction
 
 def left(VG,If,Ib):
-    hyst=~np.isclose(If,Ib)
+    hyst=(~np.isclose(If,Ib))
     i=np.argmin(VG[hyst])
     return VG[hyst][i],If[hyst][i],Ib[hyst][i]
 

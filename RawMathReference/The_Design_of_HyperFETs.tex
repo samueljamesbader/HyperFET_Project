@@ -1,0 +1,409 @@
+% arara: pdflatex
+% arara: bibtex
+% arara: pdflatex
+\documentclass[letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{amsfonts,amsmath,amssymb}
+\usepackage{natbib}
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{colorlinks=false,pdfborder={0 0 0}}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+%\frenchspacing
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+
+%\setcounter{secnumdepth}{0}
+
+\newcommand{\VT}{\ensuremath{V_\mathrm{T}}}
+\newcommand{\VTO}{\ensuremath{V_\mathrm{T0}}}
+\newcommand{\VTm}{\ensuremath{V_\mathrm{T}^-}}
+\newcommand{\VTp}{\ensuremath{V_\mathrm{T}^+}}
+\newcommand{\VDD}{\ensuremath{V_\mathrm{DD}}}
+\newcommand{\Vth}{\ensuremath{V_\mathrm{th}}}
+\newcommand{\VGS}{\ensuremath{V_\mathrm{GS}}}
+\newcommand{\VGSi}{\ensuremath{V_\mathrm{GSi}}}
+\newcommand{\VDS}{\ensuremath{V_\mathrm{DS}}}
+\newcommand{\VDSi}{\ensuremath{V_\mathrm{DSi}}}
+\newcommand{\VMIT}{\ensuremath{V_\mathrm{MIT}}}
+\newcommand{\VIMT}{\ensuremath{V_\mathrm{IMT}}}
+\newcommand{\Vmet}{\ensuremath{V_\mathrm{met}}}
+\newcommand{\vmet}{\ensuremath{v_\mathrm{met}}}
+
+\newcommand{\Cinv}{\ensuremath{C_\mathrm{inv}}}
+
+\newcommand{\ID}{\ensuremath{I_\mathrm{D}}}
+\newcommand{\IOFF }{\ensuremath{I_\mathrm{OFF}}}
+\newcommand{\ION}{\ensuremath{I_\mathrm{ON}}}
+\newcommand{\IMIT}{\ensuremath{I_\mathrm{MIT}}}
+\newcommand{\IIMT}{\ensuremath{I_\mathrm{IMT}}}
+
+\newcommand{\Rins}{\ensuremath{R_\mathrm{ins}}}
+\newcommand{\Rmet}{\ensuremath{R_\mathrm{met}}}
+\newcommand{\Rinsp}{\ensuremath{R_\mathrm{ins}'}}
+\newcommand{\Rmetp}{\ensuremath{R_\mathrm{met}'}}
+
+\newcommand{\pins}{\ensuremath{\rho_\mathrm{ins}}}
+\newcommand{\pmet}{\ensuremath{\rho_\mathrm{met}}}
+\newcommand{\pinsp}{\ensuremath{\rho_\mathrm{ins}'}}
+\newcommand{\pmetp}{\ensuremath{\rho_\mathrm{met}'}}
+
+
+
+\begin{document}
+
+\title{The Design of HyperFETs}
+\author{Sam Bader, Debdeep Jena}
+\author{Sam Bader$^1$, Debdeep Jena$^{2,3}$\\ $^1$Cornell University, Applied and Engineering Physics\\$^2$Cornell University, Electrical and Computer Engineering\\$^3$Cornell University, Materials Science and Engineering }
+
+
+\maketitle
+
+
+\section{Model}
+\subsection{Transistor}
+The transistor is modeled generically by a heavily simplified virtual-source (short-channel) MOSFET model \cite{Khakifirooz_2009}.  Although this model was first defined for Silicon transistors, it has been successfully adapted to numerous other contexts, including Graphene \cite{Han_Wang_2011} and Gallium Nitride devices, both HEMTs \cite{RadhakrishnaThesis} and MOSHEMT+VO$_2$ HyperFETs \cite{Verma_2017}.  Following Khakifirooz \cite{Khakifirooz_2009}, the drain current $\ID$ is expressed
+\begin{equation}
+\frac{\ID}{W}=Q_{ix_0}v_{x_0}F_s
+\end{equation}
+where $Q_{iz_0}$ is the charge at the virtual source point, $v_{x_0}$ is the virtual source saturation velocity, and $F_s$ is an empirically fitted ``saturation function'' which smoothly transitions between linear ($F_s\propto V_{DS}/V_{DSSAT}$) and saturation ($F_s\approx 1$) regimes.  The charge in the channel is described via the following semi-empirical form first proposed for CMOS-VLSI modeling \cite{Wright_1985} and employed frequently since (often with modifications, eg \cite{Khakifirooz_2009, RadhakrishnaThesis}):
+\begin{equation}
+Q_{ix_0}=C_\mathrm{inv}nV_\mathrm{th}\ln\left[1+\exp\left\{\frac{\VGSi-\VT}{nV_\mathrm{th}}\right\}\right]
+\end{equation}
+where $C_\mathrm{inv}$ is an effective inversion capacitance for the gate, $n\Vth \ln10$ is the subthreshold swing of the transistor, $\VGS$ is the transistor gate-to-source voltage, $\VT$ is the threshold voltage, and $V_\mathrm{th}$ is the thermal voltage $kT/q$.
+
+For precise modeling, Khakifirooz includes further adjustments of $\VT$ due to the drain voltage (DIBL parameter $\delta$) and the gate voltage (strong vs weak inversion shift), 
+\begin{equation}
+  \VT=\VTO-\delta \VDSi-\alpha \Vth F_f(\VGSi)
+  \label{eq:DIBL}
+\end{equation}
+where $\delta$ is the DIBL parameter, and $F_f$ is a smoothing function which goes from 1 below \VT\ to 0 above \VT.  We will not employ any specific form of $F_f$ for analytic work.  Futher, we will  assume the supply voltage is maintained above the gate overdrive such that $F_s\approx 1$. However, we will add on a leakage floor with conductance $G_\mathrm{leak}$.  Altogether, the final current expression (for the analytical part of this analysis) is
+\begin{equation}
+\frac{\ID}{W}=nv_{x_0}C_\mathrm{inv}\Vth \ln\left[1+\exp\left\{\frac{\VGSi-\VT}{n\Vth }\right\}\right]+\frac{G_\mathrm{leak}}{W}V_\mathrm{DSi}\label{eq:transistor_iv}
+\end{equation}
+And we will often use the shorthands
+\begin{equation}
+  \VTm=\VTO-\delta\VDS-\alpha\Vth, \quad
+  \VTp=\VTO-\delta\VDS, \quad
+  k=v_{x_0}C_\mathrm{inv}W
+  \label{eq:short}
+\end{equation}
+for the deep-subthreshold threshold voltage at $\VDSi=\VDD$, the inversion threshold voltage at $\VDSi=\VDD$, and the inversion transconductivity respectively.
+\subsection{Phase-change resistor}
+\label{ss:PCR}
+The phase-change material is included by a similarly generic and brutally simple model.  As done with the transistor, the goal is to capture only the most relevant feature: here, an abrupt change in resistance.  However, for a concrete example, the material most frequently used in HyperFET research \cite{Pergament_2013,Shukla_2015} is Vanadium Dioxide (VO$_2$), which features an S-style (ie current-controlled) and hysteretic negative differential resistance (NDR) region \cite{Pergament_arxiv2016,Zimmers_2013} due to an insulator-metal transition (IMT), the underlying mechanism of which has been a source of long-running controversy \cite{Pergament_2013}.  Though the literature contains numerous examples of voltage-swept I-V curves \cite{Shukla_2015,Zimmers_2013,Radu_2015,Yoon_2014}, proper modeling of a current-controlled NDR device in a circuit requires a current-swept I-V, examples of which can be found in \cite{Zimmers_2013,Kumar_2013,Pergament_arxiv2016} and schematically in the supplementary materials of \cite{Shukla_2015}.  The cleanest of these is Figure 1(b) of Kumar \cite{Kumar_2013}, which is suggested to the reader as a concrete realization of the model used herein.
+
+The phase-change resistor (PCR) will be described by a piecewise-linear model:
+\begin{equation}
+V_R=\left\{\begin{array}{llr}
+I_R\Rins &, & I_R < \IIMT \\
+V_\mathrm{met}+I_R\Rmet &, & I_R > \IMIT \\
+\end{array}\right\}
+\label{eq:PCR_iv}
+\end{equation}
+Note that $\IMIT <\IIMT $ (as in \cite{Kumar_2013}) implies hysteresis in the PCR itself, while $\IMIT >\IIMT $ implies a disallowed current range and can lead to oscillation as discussed in the supplementary materials of \cite{Shukla_2015}.  For convenience, we define voltage thresholds, $V_\mathrm{IMT}=\IIMT \Rins $ and $V_\mathrm{MIT}=\IMIT \Rmet +V_\mathrm{met}$.  Finally, we require $V_\mathrm{met}+\IIMT \Rmet <V_\mathrm{IMT}$ and $\IMIT \Rins >V_\mathrm{MIT}$ to ensure that the absolute resistance of the metallic state is lower than that of the insulating state wherever they are both defined.
+
+\section{HyperFET Regimes}
+When the PCR is attached in series with the source of the transistor, the total device satisfies the above equations with the additional matching $I=\ID=I_R$ and $\VGS=V_{GS}-V_R$ where $I$ is the current through the device and $V_{GS}$ is the voltage between HyperFET gate (the transistor gate) and the HyperFET source (the exterior node of the resistor).  We can immediately solve for several regions of the HyperFET model.  For this section, it is assumed that the transistor and PCR are scaled such that the left end of the hysteretic region and the lower branch are entirely contained within subthreshold, and above the leakage floor; these choices will be discussed in the next section.
+
+\subsection{Leakage floor}
+When the transistor is completely off, only the leakage term of \eqref{eq:transistor_iv} remains, and combines with the PCR off-state resistance, leading to
+\begin{equation}
+I=G_\mathrm{off}V_{DS},\quad G_\mathrm{off}^{-1}=\Rins +1/G_\mathrm{leak}
+\end{equation}
+\subsection{Insulating (lower) branch of hysteretic region}
+For the lower branch (in the region above the leakage floor), we plug $\VGSi=V_\mathrm{GS}-I\Rins $ and $V_\mathrm{DSi}=V_\mathrm{DS}-I\Rins $ into the transistor I-V \eqref{eq:transistor_iv}, and take the subthreshold limit: $\ln(1+e^x)\approx e^x$ for $-x \gg 1$.
+\begin{equation}
+  \frac{I}{W}=nC_\mathrm{inv}v_{x_0}\Vth\exp\left\{\frac{V_\mathrm{GS}-I\Rinsp -\VTm}{n\Vth }\right\} + \frac{G_\mathrm{leak}}{W}(V_\mathrm{DS}-I\Rins )
+\label{eq:insbranch_preW}
+\end{equation}
+where $\Rinsp=(1+\delta)\Rins$.
+This can be rearranged and solved in terms of the Lambert $\mathcal{W}$ function
+\begin{equation}
+  I=\frac{n\Vth }{\Rinsp }\mathcal{W}\left[\frac{k\Rins' }{1+G_\mathrm{leak}\Rins }\exp\left\{\frac{V_\mathrm{GS}-\VTm-\frac{G_\mathrm{leak} V_\mathrm{DS}\Rins }{(1+G_\mathrm{leak}\Rins )W}}{n\Vth}\right\}\right]+\frac{G_\mathrm{leak}V_\mathrm{DS}}{1+G_\mathrm{leak}\Rins }
+\label{eq:insbranch_wleak}
+\end{equation}
+If $I$ is well above the leakage floor, this reduces to
+\begin{equation}
+I=\frac{n\Vth }{\Rins'}\mathcal{W}\left[k\Rins'\exp\left\{\frac{V_\mathrm{GS}-\VTm}{n\Vth}\right\}\right]
+\label{eq:insbranch}
+\end{equation}
+\subsection{Metallic (upper) branch of the hysteretic region}
+For the upper branch (in deep subthreshold), we follow the same procedure to find
+\begin{equation}
+  I=\frac{n\Vth }{\Rmetp}\mathcal{W}\left[k\Rmetp \exp\left\{\frac{V_\mathrm{GS}-\VTm-\Vmet}{n\Vth }\right\}\right]
+\label{eq:metbranch}
+\end{equation}
+where $\Rmetp=(1+\delta)\Rmet$.
+%Note that if the metal-state resistance is small and we are in subthreshold $I\Rmet \ll n\Vth $, we approximate
+%\begin{equation}
+%\frac{I}{W}\approx n\Vth C_\mathrm{inv}v_{x_0}\exp\left\{\frac{V_\mathrm{GS}-V_\mathrm{met}-\VT}{n\Vth }\right\}
+%\label{eq:met_smallR}
+%\end{equation}
+\subsection{Strong inversion}
+Again we plug $\VGSi=V_\mathrm{GS}-V_\mathrm{met}-I\Rmet $ into the transistor I-V \eqref{eq:transistor_iv}, but this time, we take the strong inversion limit $\ln(1+e^x)\approx x$ for $x\gg 1$.
+\begin{equation}
+  \frac{I}{W}=v_{x_0}C_\mathrm{inv}(V_\mathrm{GS}-V_\mathrm{met}-I\Rmetp -\VTp)
+  \label{eq:Isat_pre}
+\end{equation}
+which gives
+\begin{equation}
+  I=\frac{k}{1+k\Rmetp}(V_\mathrm{GS}-V_\mathrm{met}-\VTp)
+  \label{eq:Isat}
+\end{equation}
+
+\subsection{Voltage boundaries of the hysteretic region}
+The leftmost point of the upper branch is defined by the minimum current below which no metallic-state solution can exist: $I=\IMIT $.  By \eqref{eq:PCR_iv}, $V_\mathrm{R}=V_\mathrm{MIT}$.  Plugging this point into \eqref{eq:transistor_iv} and solving yields
+\begin{equation}
+V_\mathrm{left}-\VT=V_\mathrm{MIT}+n\Vth \ln\left[\exp\left\{\frac{\IMIT }{nk\Vth }\right\}-1\right]
+\end{equation}
+We have not yet made an assumption of subthreshold in the above equation, but if we do, we arrive at
+\begin{equation}
+V_\mathrm{left}-\VTm\approx (1+\delta)V_\mathrm{MIT}-n\Vth \ln\left[\frac{nk\Vth }{\IMIT }\right]
+\label{eq:Vleft_sub}
+\end{equation}
+Since $V_\mathrm{left}$ may or may not be near $\VT$ depending on the parameters of the devices in question, we will take one self-consistent adjustment to account for strong/weak inversion shift
+\begin{equation}
+  V_\mathrm{left}\rightarrow V_\mathrm{left}+\alpha\Vth \left[1-F_f\right]_{\VDSi=\VDD-\VMIT, \VGSi=V_\mathrm{left}-\VMIT}
+\label{eq:Vleft_sub2}
+\end{equation}
+If $V_\mathrm{left}$ is far below $\VT$, then this does nothing, but as $V_\mathrm{left}$ approaches threshold, this shifts the left side rightward on the order of $\alpha\Vth$.
+
+The rightmost point of the upper branch is defined by the maximum current beyond which no insulating state solution can exist: $I=\IIMT $.  By definition then, $V_\mathrm{R}=V_\mathrm{IMT}$.  Plugging this point in
+\begin{equation}
+V_\mathrm{right}-\VT=V_\mathrm{IMT}+n\Vth \ln\left[\exp\left\{\frac{\IIMT }{nk\Vth }\right\}-1\right]
+\end{equation}
+where again, we have delayed the assumption of subthreshold until this point:
+\begin{equation}
+V_\mathrm{right}-\VTm\approx (1+\delta)V_\mathrm{IMT}-n\Vth \ln\left[\frac{nk\Vth }{\IIMT }\right]
+\label{eq:Vright_sub}
+\end{equation}
+Note that $V_\mathrm{right}$ depends only on the properties of the insulating branch, so even if the top right corner of the hysteresis loop is in strong inversion, this expression may still be entirely valid because the lower branch is likely in subthreshold.
+Equations \ref{eq:Vleft_sub} and \eqref{eq:Vright_sub} can be combined into a simple form (ignoring the $\alpha$ shift):
+\begin{equation}
+  V_\mathrm{hyst}=V_\mathrm{right}-V_\mathrm{left}=(1+\delta)(V_\mathrm{IMT}-V_\mathrm{MIT})+n\Vth \log\frac{\IIMT }{\IMIT }
+  \label{eq:Vhyst_sub}
+\end{equation}
+Assuming the voltage scale of the PCR is sufficiently larger than thermal voltage, this reduces to
+\begin{equation}
+  V_\mathrm{hyst}\approx (1+\delta)(V_\mathrm{IMT}-V_\mathrm{MIT})
+  \label{eq:Vhyst_simple}
+\end{equation}
+Note that it is formally possible for \eqref{eq:Vhyst_sub} to become negative, ie $V_\mathrm{left}>V_\mathrm{right}$. Examining the definitions of $V_\mathrm{left}$ and $V_\mathrm{right}$, this implies that, in such circumstances, the range between the two will contain no valid solution, ie it will be unstable (oscillatory) rather than bistable (hysteretic).  See the supplementary materials of \cite{Shukla_2015} for a discussion of this behavior in the context of resistors only.
+
+\subsection{Current boundaries of the hysteresis}
+The current at the left boundary of the metallic branch is at $I_\mathrm{left, met}=\IMIT $.  Now plugging  the subthreshold expression for the left boundary \eqref{eq:Vleft_sub} into the expression for the insulating branch \eqref{eq:insbranch}, we can get an expression for the current at the same point on the insulating branch:
+\begin{equation}
+I_\mathrm{left,ins}=\frac{n\Vth }{\Rinsp}\mathcal{W}\left[\frac{\IMIT \Rinsp}{n\Vth }\exp\left\{\frac{V_\mathrm{MIT}}{n\Vth }\right\}\right]
+\label{eq:Ileftins}
+\end{equation}
+And note that the inequality $\IMIT \Rins >V_\mathrm{MIT}$ we demanded in Sec \ref{ss:PCR} ensures that the current on the insulating branch at the boundary is strictly lower, so there will be a discontinuous jump:
+\begin{equation}
+I_\mathrm{left, ins}<\frac{n\Vth }{\Rinsp}\mathcal{W}\left[\frac{\IMIT \Rinsp}{n\Vth }\exp\left\{\frac{\IMIT \Rinsp }{n\Vth }\right\}\right]=\IMIT 
+  \label{eq:leftjump}
+\end{equation}
+The current at the right boundary of the insulating branch is $I_\mathrm{right, ins}=\IIMT $.  Now plugging the the subthreshold expression for the right boundary \eqref{eq:Vright_sub} into the expression of the metallic branch \eqref{eq:metbranch}, we can get an expression for the current at the same point on the metallic branch:
+\begin{equation}
+  I_\mathrm{right,met}=\frac{n\Vth }{\Rmetp}\mathcal{W}\left[\frac{\IIMT \Rmetp}{n\Vth }\exp\left\{\frac{V_\mathrm{IMT}-V_\mathrm{met}}{n\Vth }\right\}\right]
+\label{eq:Irightmet}
+\end{equation}
+And note that the inequality $V_\mathrm{met}+\IIMT\Rmet <V_\mathrm{IMT}$ we demanded in Sec \ref{ss:PCR} ensures that the current on the metallic branch at the boundary is strictly higher, so there will be a discontinuous jump:
+  (NOTE this paragraph is technically not true any more; once I include DIBL, the requirements are slightly higher\dots I need that to hold for $\Rmetp$, not just $\Rmet$, but small difference\dots)
+\begin{equation}
+  I_\mathrm{right,met}>\frac{n\Vth }{\Rmet }\mathcal{W}\left[\frac{\IIMT \Rmet }{n\Vth }\exp\left\{\frac{\IIMT \Rmet }{n\Vth }\right\}\right]=\IIMT 
+  \label{eq:rightjump}
+\end{equation}
+%\section{Super-Boltzmann behavior}
+%As evidenced by \eqref{eq:leftjump} and \eqref{eq:rightjump}, there are two points of discontinuity.  A $V_\mathrm{GS}$ sweep from OFF to ON may then move continuously along the insulating branch, but then will have to jump up to the metallic branch at the right end of the hysteresis.  Conversely, a $V_\mathrm{GS}$ sweep from ON to OFF may move continuously along the metallic branch, but then will have to jump down to the insulating branch at the left end of the hysteresis.  At these two localized points, the current changes a finite amount over an infinitesimally small voltage difference, surpassing the drift-diffusion (``Boltzmann'') limit of $\frac{dV}{d \log I} >\frac{kT}{q}$
+%How do these local violations of the Boltzmann limit at the hysteretic boundaries connect to the useful, global steepness of the I-V curve, as measured outside hysteresis?
+%
+%\subsection{Immediate steepness}
+%Immediately to the left of the hysteresis, the current is $I_\mathrm{left,ins}$, and immediately to the right, the current is $I_\mathrm{right, met}$, which, from expressions \eqref{eq:Ileftins}, \eqref{eq:Irightmet} gives a log-ratio of currents
+%
+%
+%\begin{equation}
+%  \log{\frac{I_\mathrm{right}}{I_\mathrm{left}}}=\log\frac{\Rins }{\Rmet }+\log\frac{\mathcal{W}\left[\frac{\IIMT \Rmet }{n\Vth }\exp\left\{\frac{V_\mathrm{IMT}-V_\mathrm{met}}{n\Vth }\right\}\right]}{\mathcal{W}\left[\frac{\IMIT \Rins }{n\Vth }\exp\left\{\frac{V_\mathrm{MIT}}{n\Vth }\right\}\right]}
+%\label{eq:logI_sub}
+%\end{equation}
+%
+%Inverting the $\mathcal{W}$'s in \eqref{eq:Ileftins}, \eqref{eq:Irightmet} allows us to rewrite this in a suggestive form:
+%\begin{align}
+%  V_\mathrm{hyst}&=n\Vth \ln\left[ \frac{I_\mathrm{right}}{I_\mathrm{left}} \right]-I_\mathrm{left}\Rins +I_\mathrm{right}\Rmet +V_\mathrm{met}\\
+%  &=n\Vth \ln\left[ \frac{I_\mathrm{right}}{I_\mathrm{left}} \right]-V_\mathrm{PCR, left}+V_\mathrm{PCR, right}
+%  \label{}
+%\end{align}
+%where $V_\mathrm{PCR}$ indicates the voltage across the PCR at the left or right hysteresis boundary.  The first term is the intrinsic swing of the transistor.  So the condition for the PCR improving the transistor swing is that more voltage is dropped on the PCR in the insulating state at the left of the hysteresis than dropped there in the metallic state at the right side.
+%
+%Put another way, we can define a unitless ``loaded subthreshold steepness''
+%\begin{equation}
+%  \Sigma_n=\Vth \frac{\log{\frac{I_\mathrm{right}}{I_\mathrm{left}}}}{V_\mathrm{hyst}}
+%  \label{eq:sigman}
+%\end{equation}
+%The PCR improves the subthreshold swing of the transistor (in the immediate vicinity of the hysteresis) if $\Sigma_n> 1/n$, and enables super-Boltzmann switching if $\Sigma_n>1$.  
+%
+%Furthermore, we note that \eqref{eq:logI_sub} and \eqref{eq:Vhyst_sub} are independent of all the transistor properties except $n$ (because we've assumed the hysteresis occurs within subthreshold).  So setting $n=1$, we can consider $\Sigma_1$, the ``unloaded steepness'', as a transistor-independent figure of merit for a PCR which expresses its ability to enable super-Boltzmann switching in a HyperFET configuration.
+%\subsection{Adjacent steepness}
+%Taking the log and differentiating both sides of Eq \eqref{eq:insbranch_preW}, we find the slope of the insulating branch:
+%\begin{equation}
+%  \left.\frac{d\log I}{dV_\mathrm{GS}}\right|_\mathrm{ins}=\frac{1}{nV_\mathrm{th}}\frac{1}{1+(I\Rins /n\Vth )}
+%  \label{eq:steep_ins}
+%\end{equation}
+%Similarly, the slope of the metallic branch is
+%\begin{equation}
+%  \left.\frac{d\log I}{dV_\mathrm{GS}}\right|_\mathrm{met}=\frac{1}{nV_\mathrm{th}}\frac{1}{1+(I\Rmet /n\Vth )}
+%  \label{eq:steep_met}
+%\end{equation}
+%Note that the quantity in parentheses in \eqref{eq:steep_ins} is $V_\mathrm{PCR}$ and the same in \eqref{eq:steep_met} is $V_\mathrm{PCR}-V_\mathrm{met}$.  As discussed in the previous section, for a useful PCR, $V_\mathrm{PCR, right}<V_\mathrm{PCR, left}$, so it's reasonable to expect, for an optimal PCR design, that the region immediately to the right of the hysteresis will be steeper than that to the left.
+%
+%
+\section{Shifted comparison}
+The addition of a PCR reduces both the on- and off- current of a transistor, so in demonstrating the premise of the HyperFET, Shukla et al \cite{Shukla_2015} use a procedure of shifting the threshold voltage of a HyperFET to re-equalize the off-currents.  Since the off-current will be exponentially suppresed by a shift while the on-current (in inversion) will change linearly, this can, under reasonable circumstances, result in a large increase in the on-current at constant off-current.  The entire procedure can be performed analytically within this model, shedding light on precisely when a PCR is able to improve a transistor.  
+
+\subsection{The shift}
+To this end, we imagine a transistor $\mathcal{T}$ with threshold voltage $\VTO$ is reengineered to an identical transistor $\mathcal{T'}$ with threshold $\VTO'=\VTO-\Delta \VTO$, and then combined with a PCR to form a HyperFET with the same off-current $\IOFF $ as the original transistor.  This condition is expressed by
+\begin{align}
+  \IOFF &=\frac{n V_\mathrm{th}}{\Rinsp}\mathcal{W}\left[ k\Rinsp\exp\left\{ \frac{-V_\mathrm{T}'^{-}}{n\Vth} \right\} \right]\\
+  &=\frac{n V_\mathrm{th}}{\Rinsp}\mathcal{W}\left[ \frac{\IOFF \Rinsp}{n\Vth}\exp\left\{ \frac{\Delta \VTO}{n\Vth} \right\} \right]
+  \label{}
+\end{align}
+where the first equality follows from the HyperFET current equations \eqref{eq:insbranch} and the second follows from plugging in the normal transistor current equation \eqref{eq:transistor_iv} in the subthreshold limit.  This is easily inverted to yield
+\begin{equation}
+  \Delta \VTO=\IOFF \Rinsp 
+  \label{eq:shift}
+\end{equation}
+\subsection{Shifting gain}
+This shift increases the on-current at constant $V_\mathrm{DD}$.  Plugging \eqref{eq:shift} into the strong inversion expression, we find the new HyperFET on-current 
+\begin{equation}
+  \ION'=\frac{k}{1+k\Rmetp }\left( V_\mathrm{DD}-\VTp+\IOFF \Rinsp -V_\mathrm{met} \right)
+  \label{eq:shiftedon}
+\end{equation}
+The ratio of the HyperFET on-current to the original transistor on-current, ie the ``shifting gain'', is then
+\begin{equation}
+  \frac{\ION'}{\ION}=\frac{1+\left( \IOFF \Rinsp -V_\mathrm{met}\right)/(V_\mathrm{DD}-\VTp )}{1+k\Rmetp }
+  \label{eq:Ion_rat}
+\end{equation}
+So we find that the PCR enables an increased on-current if
+\begin{equation}
+  \IOFF \Rinsp -V_\mathrm{met} >\ION\Rmetp
+  \label{eq:inconcond}
+\end{equation}
+Namely, the voltage across the PCR in ON-state is smaller than that in the OFF state.  Setting \Vmet\ to zero for a moment, this condition becomes the simple statement that the insulator/metal resitance ratio of the PCR must be larger than the desired HyperFET \ION/\IOFF ratio in order to be useful.  For example, HyperFETs have been demonstrated in conjunction with GaN HEMTs, but despite that GaN HEMTs can easily achieve a dozen orders of ON-OFF ratio, making a HyperFET from one will necessarily involve limiting the ON-OFF to the PCR resistivity ratio (at most five orders).
+
+(Note: The above discussion does assume that $\IOFF <I_\mathrm{left}$.)
+\subsection{Shifting supply reduction}
+Whereas the above subsection held $\IOFF $ and $V_\mathrm{DD}$ constant and noted the increase in $\ION$, one could alternatively hold $\IOFF $ and $\ION$ constant, and allow $V_\mathrm{DD}$ to change.  Comparing \eqref{eq:shiftedon} to to the strong inversion expression, we find that holding $\ION$ constant requires the supply voltage to change to
+\begin{equation}
+  V_\mathrm{DD}'-\VTp=(V_\mathrm{DD}-\VTp)(1+k\Rmetp)+V_\mathrm{met}-\IOFF \Rinsp 
+  \label{eq:shiftedVDD}
+\end{equation}
+ie
+\begin{equation}
+  \Delta V_\mathrm{DD}'=(V_\mathrm{DD}-\VTp)(k\Rmetp)+V_\mathrm{met}-\IOFF \Rinsp 
+  \label{eq:VDDshift}
+\end{equation}
+The conditions for this shift to be useful (ie negative) are the same as in the previous subsection.
+
+
+
+\section{Optimization}
+Taking the expression for the shifting gain \eqref{eq:Ion_rat}, we can refine the region in the PCR parameter space best suited to a HyperFET.  We will assume that the various current parameters scale proportional to the PCR cross-sectional area $wt$ (ie $I_\mathrm{IMT, MIT}= w t J_\mathrm{IMT, MIT})$, and the various voltages scale proportional to the PCR length $l$ (ie $V_\mathrm{IMT}=lJ_\mathrm{IMT}\pins$, $V_\mathrm{met}=lv_\mathrm{met}$, $V_\mathrm{MIT}=lJ_\mathrm{MIT}\pmet+l\vmet$).
+
+With these definitions, we now consider the shifted gain as a function of $l$; it takes the form $(A_1+B_1l)/(C_1+D_1l)$.  Similarly, we could consider the shifted gain as a function of $\frac{1}{wt}$, and we find it takes the form $(A_2+\frac{B_2}{wt})/(C_2+\frac{D_2}{wt})$.  The derivative $\frac{d}{dx}\left[(A+Bx)/(C+Dx)\right]=(BC-DA)/(C+Dx)^2$ is monotonic with sign given by $BC-DA$.  In the cases of $l$ and $wt$, these signs are
+\begin{equation}
+  \frac{\partial \ION'}{\partial l}\propto\IOFF\Rinsp-\ION\Rmetp-\Vmet
+  \label{eq:lderiv}
+\end{equation}
+\begin{equation}
+  \frac{\partial \ION'}{\partial \frac{1}{wt}}\propto\IOFF\Rinsp-\ION\Rmetp-\Vmet+(1+k\Rmetp)\Vmet
+  \label{eq:1wtderiv}
+\end{equation}
+By \eqref{eq:inconcond} and \eqref{eq:lderiv}, we know that, if we are in a regime where the HyperFET is useful, then we can always improve it \ION\ further by increasing $l$.  By \eqref{eq:inconcond} and \eqref{eq:1wtderiv}, we see that shrinking $wt$ will always improve \ION, unless \vmet\ is signficantly large and negative, in which case increasing $wt$ will always improve \ION.
+
+Since $l$ should always be larger and $wt$ should always be smaller, it's clear that the optimal parameters will always lie along a problem boundary set by some other constraint.  The most obvious constraint is that the boundaries of the HyperFET transfer curve at $\VGS=0$ and $\VGS=\VDD$ should be hysteresis-free for a practical logic device.  In this regard, increasing $l$ increases the right voltage boundary of the hysteresis, and decreasing $wt$ lowers the left current of the hysteresis.  So the trade-off is, broadly, larger hysteresis for the larger \ION.  Given this, it is reasonable to estimate the scale of the optimal $l$ and $wt$ by the extremizing until the hysteresis nears the left and right limits of device operation.
+
+The left current boundary \eqref{eq:Ileftins} can be reexpressed
+\begin{equation}
+  I_\mathrm{left, ins}=\frac{wtn\Vth}{l\pinsp}\mathcal{W}\left[ \frac{lJ_\mathrm{MIT}\pinsp}{n\Vth}\exp\left\{ \frac{lJ_\mathrm{MIT}\pmet+l\vmet}{n\Vth} \right\} \right]
+  \label{eq:Ill_geom}
+\end{equation}
+so the condition of maximal hysteresis gives
+\begin{equation}
+  \frac{1}{wt}=\frac{n\Vth}{l\pinsp\IOFF}\mathcal{W}\left[ \frac{lJ_\mathrm{MIT}\pinsp}{n\Vth}\exp\left\{ \frac{lJ_\mathrm{MIT}\pmet+l\vmet}{n\Vth} \right\} \right]
+  \label{eq:Ill_geom_ext}
+\end{equation}
+and the right boundary (after being shifted) can be expressed
+\begin{equation}
+  V_\mathrm{right}-\VTm=J_\mathrm{IMT}\pinsp l-n\Vth \ln\left[ \frac{nk\Vth}{wtJ_\mathrm{IMT}} \right]-\IOFF \frac{l\pinsp }{wt}
+  \label{eq:Vright_geom}
+\end{equation}
+so the condition of maximal hysteresis gives
+\begin{equation}
+  V_\mathrm{DD}-\VTm=J_\mathrm{IMT}\pinsp l-n\Vth \ln\left[ \frac{nk\Vth}{wtJ_\mathrm{IMT}} \right]-\IOFF \frac{l\pinsp }{wt}
+  \label{eq:Vright_geom_ext}
+\end{equation}
+Plugging in \eqref{eq:Ill_geom} and making use of the identity $\ln\mathcal{W}(z)=\ln z- \mathcal{W}(z)$ results in a cancelation of both the Lambert terms
+\begin{multline*}
+  V_\mathrm{DD}-\VTm=J_\mathrm{IMT}\pinsp l-n\Vth \ln\left[ \frac{k(n\Vth)^2}{l\pinsp \IOFF J_\mathrm{IMT}} \right]\\
+  -n\Vth\ln\left[ \frac{lJ_\mathrm{MIT}\pinsp}{n\Vth}\exp\left\{ \frac{lJ_\mathrm{MIT}\pmet+l\vmet}{n\Vth} \right\} \right]
+\end{multline*}
+which becomes
+\begin{multline*}
+  V_\mathrm{DD}-\VTm=J_\mathrm{IMT}\pinsp l-n\Vth \ln\left[ \frac{kn\Vth J_\mathrm{MIT}}{ \IOFF J_\mathrm{IMT}} \right]
+  -\left( lJ_\mathrm{MIT}\pmet+l\vmet \right)
+\end{multline*}
+and can be solved for $l$
+\begin{equation}
+  l=\frac{V_\mathrm{DD}-\VTm+n\Vth \ln\left[ \frac{kn\Vth J_\mathrm{MIT}}{ \IOFF J_\mathrm{IMT}} \right]}{J_\mathrm{IMT}\pinsp - J_\mathrm{MIT}\pmet-\vmet}
+  \label{eq:lopt}
+\end{equation}
+and this result can be plugged back into \eqref{eq:Ill_geom_ext} so that the optimal geometry is obtained.
+
+This derivation does have one (correctable) caveat: as $V_\mathrm{right}$ pushes toward \VDD, \VIMT\ is also moving toward \VDD, and when \VIMT\ is within \Vth\ of \VDD\ or larger, the voltage across the transistor drain-source in the near-\VDD\ insulating branch reaches \Vth\ or lower and it becomes impossible to saturate the transistor, so the entire model, with its assumption of saturation (neglect of the $F_s$ factor) breaks down.  In fact, it should be clear that, once $\VIMT>\VDD$, there can be no $I\rightarrow M$ jump (even though the formulas for $V_\mathrm{right}$ continue to provide a finite location).  While this is a region unsatisfactorally handled by the model, it is also a terrible region in which to design the device: over a short range of variation in material geometry, the right boundary of hysteresis rapidly moves from some reasonable location potentially well below $\VDD$ to entirely inaccessible.  So it makes sense to set a further constraint that $\VIMT$ stays well below $\VDD$ (numerical examination suggests $\VIMT < \VDD - \Vth/2$ actually suffices).  This constraint is simple to express as
+\begin{equation}
+  l=\frac{\VDD-\Vth/2}{J_\mathrm{IMT}\pins}
+  \label{eq:lmax}
+\end{equation}
+The proper $l$ to use is the minimum of those suggested by \eqref{eq:lopt} and \eqref{eq:lmax}.
+
+As a practical concern of course, one may not wish to set the boundary of the hysteresis right at \VDD\ and 0, since these are the operating points.  It's easy to plug a safety margin into these formulas by replacing $\VDD$ with $\VDD-M_r\Vth$ in \eqref{eq:lopt}, where $M_r$ is a quantity of order unity chosen by the reliability engineer.  This does not change the exactness of the solution.  One could also, to reasonable approximation, multiply $wt$ by a safety factor $M_l$ (which increases $I_\mathrm{left}$ by the same factor), and then plug back into \eqref{eq:Vright_geom_ext} to resolve for $l$.  (In principle, this should process should be iterated to solve $l$ and $wt$ simultaneously, but at the precision of this discussion, one iteration is generally sufficient.)
+
+%\section{Device considerations}
+%Given the above expressions, we now analyze the effect of the PCR on $V_\mathrm{on}$ and $I_\mathrm{on}/I_\mathrm{off}$.  We begin with some basic observations of the HyperFET I-V and how they shape the design space for a steep-switching device.
+%\begin{enumerate}
+%\item In all of the above, $V_\mathrm{GS}$ only ever appears in the combination $V_\mathrm{GS}-\VT$, so a device engineer can shift the entire I-V curve horizontally by threshold-engineering, just as in a conventional transistor.  Thus, we will assume, without loss of generality, that the HyperFET operates between 0V and $V_\mathrm{ON}$, and this range (of width $V_\mathrm{ON}$) can be shifted to any desired location on the HyperFET I-V curve.
+%\item If the HyperFET is to operate as a conventional logic device (with enhanced steepness), then the $V_\mathrm{OFF}=0\mathrm{V}$ must be to the left of the hysteresis, and $V_\mathrm{ON}$ must be to the right of the hysteresis.  For a given PCR, this requires a minimum $V_\mathrm{ON}>V_\mathrm{hyst}$.  From that minimum, $V_\mathrm{ON}$ will be expanded to ensure sufficient $\ION/\IOFF $ ratio (unless this ratio is already satisfied at the boundaries of the hysteretic region).
+%\item If it is necessary to expand $V_\mathrm{ON}$ beyond $V_\mathrm{hyst}$, it is preferable (if the devices can be scaled properly) to expand to the right.  The insulating branch to the left of hysteresis, with its swing $>nkT/q$ will either rejoin the original transistor IV or hit the leakage floor (and then continue at essentially a constant ratio versus the original transistor IV).  If $V_\mathrm{OFF}$ is place\ldots
+%  
+%  
+%%
+%%If the OFF point (0V) is too far from the 
+%\end{enumerate}
+%
+%
+%The procedure is essentially to choose a desired $I_\mathrm{on}/I_\mathrm{off}$, then find the minimum $V_\mathrm{on}$ compatible with this choice, given a fixed PCR.  We will assume that the device engineer is free to manipulate the  $\VT$ of the transistor, so that, effectively, the OFF point can be placed anywhere on the HyperFET I-V, and then the component devices are scaled.
+%
+%
+%sliding it left and right to choose where on the HyperFET I-V the OFF current ($V_\mathrm{GS}=0$) on the as necessary to optimize the design.  Second, the device engineer may scale the transistor 
+%
+%
+%We assume the component devices have been scaled with the optimization of these parameters in mind.
+%
+%Thoughts for the morning:
+%
+%(1) Defend why want hysteresis in subthreshold
+%    (a) To be able to climb toward right
+%    (b) Does shape of hysteresis change at lower values?
+%(2) Derive Von at fixed Ion/Ioff.  (width of hyst provided min Von, then grow at nVth*(Ion/Ioff- [Ion/Ioff]\_hyst)
+%    (a) could probably get a better expression for [Von versus (Ion/Ioff)] or at least (Ion/Ioff)hyst by dividing Eq 6 and [the skipped equation leading to Eq 8].  That seems more likely to yield a good result than messing with W functions.
+%(3) Mention in intro: Boltzmann only violated at one VGS per branch.  This paper gives the connection between local violation and global properties of Ion/Ioff vs Von.
+%
+%(4) Compute with right-end in sat. Near-Threshold Computing: Reclaiming Moore's Law Through Energy Efficient Integrated Circuits
+%
+\bibliography{biblio}{}
+\bibliographystyle{plain}
+
+
+\end{document}

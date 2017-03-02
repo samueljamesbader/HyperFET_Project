@@ -87,7 +87,7 @@ def shiftedgain(hyperfet,VDD):
 #def shiftedsr(self):
     #return (self.VDD-self.VTp)*self.mosfet.k*self.R_metp+self.vo2.V_met-self._approx_Ioff*self.R_insp
 
-def optsize(fet,VDD,Ml=1,Mr=0,**vo2params):
+def optsize(fet,VDD,Ml=1,Mr=0,verbose=True,**vo2params):
     VTp=fet.VT0-fet.delta*VDD
     VTm=VTp-fet.alpha*fet.Vth
     app_Ioff=fet.n*fet.k*fet.Vth*np.exp(-VTm/(fet.n*fet.Vth))
@@ -98,15 +98,20 @@ def optsize(fet,VDD,Ml=1,Mr=0,**vo2params):
     l2=((VDD-Mr*Vth-VTm+fet.n*Vth*np.log(fet.n*fet.Vth*fet.k*v['J_MIT']/(v['J_IMT']*app_Ioff)))/(v['J_IMT']*v['rho_i']*(1+fet.delta)-v['J_MIT']*v['rho_m']-v['v_met']))
     l=min(l1,l2)
 
-    print("l1 ",l1*1e9)
-    print("l2 ",l2*1e9)
-    print("l ",l*1e9)
+    if verbose:
+        print("l1 ",l1*1e9)
+        print("l2 ",l2*1e9)
+        print("l ",l*1e9)
 
     wti=(fet.n*Vth/(Ml*app_Ioff*l*v['rho_i']*(1+fet.delta)))*lambertw((v['J_MIT']*v['rho_i']*(1+fet.delta)*l/(fet.n*Vth))*np.exp((v['J_MIT']*v['rho_m']+v['v_met'])*l/(fet.n*Vth)))
 
     l2=(VDD-Mr*Vth-VTm+fet.n*fet.Vth*np.log(fet.n*fet.k*fet.Vth*wti/v['J_IMT']))/(v['J_IMT']*v['rho_i']*(1+fet.delta)-app_Ioff*v['rho_i']*(1+fet.delta)*wti)
-    print("l2 ",l2*1e9)
+    if verbose:
+        print("l2 ",l2*1e9)
     l=min(l1,l2)
 
-    print("l ",l*1e9)
-    print("w ",1/wti*1e18)
+    if verbose:
+        print("l ",l*1e9)
+        print("w ",1/wti*1e18)
+
+    return l,1/wti/10e-9,10e-9

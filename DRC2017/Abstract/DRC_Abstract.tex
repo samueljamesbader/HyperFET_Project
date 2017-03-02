@@ -44,6 +44,9 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 
+% Less space between figure and caption
+\usepackage[skip=0pt]{caption}
+
 % DRC abstracts use the Times New Roman font, and there are
 % multiple ways to include this in LaTeX.  Option 1 should work
 % for most LaTeX installations; however depending on your set-up,
@@ -154,19 +157,19 @@
 \section*{Introduction}
 As the juggernaut of CMOS scaling collides with the thermodynamic limits of subthreshold swing, researchers in recent years have pursued numerous classes of devices incorporating additional physics, such as interband tunneling, ferroelectricity, nano-mechanics, band-modulation, and resistive switching materials \cite{Cristoloveanu_2016}.  One such scheme from the latter category, termed the \textit{Hybrid Phase-transition FET} (or \textit{HyperFET}), simply incorporates a resistive switching material in the source of an otherwise standard transistor \cite{Shukla_2015} as depicted in Figure \ref{fig:HyperFETConstruction}c.  This phase-change resistor impedes low currents, but yields to high currents, providing a steepness boost to a Boltzmann-limited transistor.
 
-Rapid progress in this field has demonstrated devices with local subthreshold slopes tighter than 8mV/decade at room temperature, leading to $I_\mathrm{ON}$ enhancement of more than a third \cite{Frougier_2016}, and researchers have demonstrated sub-nanosecond switching \cite{Frougier_2016,Jerry_2016} of relatively large devices, with projections of much faster switching times for more aggressively scaled devices \cite{Jerry_2016}.  In addition to experimental advances, authors have projected the scaling requirements of these devices based on circuit simulation with predicted values of various nodes \cite{Shukla_2015,Frougier_2016}. 
+Rapid progress in this field has demonstrated devices with local subthreshold slopes tighter than 10mV/decade at or above room temperature \cite{Frougier_2016,Verma_2016}, leading to $I_\mathrm{ON}$ enhancement of more than a third \cite{Frougier_2016}, and researchers have demonstrated sub-nanosecond switching \cite{Frougier_2016,Jerry_2016} of relatively large devices, with projections of much faster switching times for more aggressively scaled devices \cite{Jerry_2016}.  In addition to experimental advances, authors have projected the scaling requirements of these devices based on circuit simulation with predicted characteristics of various ITRS nodes \cite{Shukla_2015,Frougier_2016}. 
 
 \section*{New Contributions}
 While circuit simulation gives accurate predictions when inputs are well-characterized, direct mathematical analysis provides a separate dimension of insight with clear identification of precisely which features a prediction depends upon. And given the simplicity of the resistive-source transistor ``circuit'', this device lends itself to a straightforward and illuminating analysis.
 
-This work employs a simple, generic, analytic short-channel transistor model \cite{Khakifirooz_2009}.  This model was originally proposed for scaled Si CMOS devices but has been successfully adapted to other material systems, and its small physical parameter set enables both direct analytic work and quick fitting to projections.  This model is combined with the simplest possible phase-change resistor model: a single piecewise linear, discontinuous and potentially hysteretic expression.  Given the elementary nature of the expressions involved, compact solutions for several regimes of the HyperFET I-V curve can be derived in short-order.
+This work employs a simple, generic, analytic short-channel transistor model \cite{Khakifirooz_2009}.  This model, shown in Figure \ref{fig:HyperFETConstruction}a was originally proposed for scaled Si CMOS devices but has been successfully adapted to other material systems, and its small physical parameter set enables both direct analytic work and quick fitting to projections.  This model is combined with the simplest possible phase-change resistor model: a single piecewise linear, discontinuous and potentially hysteretic expression, Figure \ref{fig:HyperFETConstruction}b.  Given the elementary nature of the expressions involved, compact solutions for several regimes of the resultant HyperFET I-V curve in Figure \ref{fig:HyperFETConstruction}c can be derived in short-order.
 
-With these expressions in hand, one can make numerous statements about HyperFETs without recourse to simulation.  The subthreshold and inversion behavior are derived, as well as the width and positioning of the hysteresis under relatively general conditions.  A procedure of threshold-shifting the HyperFET to match its off-current to that of the isolated transistor (as employed numerically in \cite{Shukla_2015, Frougier_2016}) is carried out analytically, and this is used to derive simple expressions for the ``shifting'' gain provided by the phase-change resistor. 
+With these expressions in hand, one can make numerous statements about HyperFETs without recourse to simulation.  The subthreshold and inversion behavior are derived, as well as the width and positioning of the hysteresis under relatively general conditions, see Figure \ref{fig:HFvsGeo}.  A procedure of threshold-shifting the HyperFET to match its off-current to that of the isolated transistor (as employed numerically in \cite{Shukla_2015, Frougier_2016}) is carried out analytically, and this is used to derive simple expressions for the ``shifting'' gain provided by the phase-change resistor. 
 
-From there, the dependence of the shifting gain on various material and geometry parameters emerges, and optimization of this gain with respect to resistor scaling is discussed analytically.  The condition for above-unity gain, as approached by simulation in \cite{Frougier_2016}, is clearly derived and intuitively stated.  Approximations to the optimal resistor geometry from a DC I-V perspective are derived under given safety margins on the hysteresis boundaries.
+From there, the dependence of the shifting gain on various material and geometry parameters emerges, and optimization of this gain with respect to resistor scaling (see Figure \ref{fig:Opt}) is discussed analytically.  The condition for above-unity gain, as approached by simulation in \cite{Frougier_2016}, is clearly derived and intuitively stated.  Approximations to the optimal resistor geometry from a DC I-V perspective are derived under given safety margins on the hysteresis boundaries.
 
 \section*{Significance}
-The mathematics provided in this work unifies numerous statements about HyperFET scaling -- which have until now depended on simulations -- into an intuitive, analytical framework, clarifying the relative importances and influences of various parameters bearing on the device characteristics.  These formulae should be of use to benchmarkers seeking the best parameter ranges to compare. And the optimization procedures described herein should aid researchers in the choice of experimental parameters as HyperFET demonstration continues to scale to more and more challenging dimensions.
+The mathematics provided in this work unifies numerous statements about HyperFET scaling -- which have until now depended on simulations -- into an intuitive, analytical framework, clarifying the relative importances and influences of various parameters bearing on the device characteristics.  These formulae should be of use to benchmarkers seeking the best parameter ranges to compare. Finally, the optimization procedures described herein should aid researchers in the choice of experimental parameters as HyperFET demonstration continues to scale to more and more challenging dimensions.
 
 % END YOUR TEXT
 
@@ -195,6 +198,8 @@ Cristoloveanu et al.  IEEE EDS, 4(5), 215 (2016)
 Shukla et al. Nature comm. 6, 7812 (2015)
 \bibitem{Frougier_2016}
 Frougier et al. Symposium on VLSI Technology, IEEE 2016
+\bibitem{Verma_2016}
+Verma et al, in preparation.
 \bibitem{Jerry_2016}
 Jerry et al. Silicon Nanoelectronics Workshop, IEEE 2016
 \bibitem{Khakifirooz_2009}
@@ -213,42 +218,24 @@ Khakifirooz et al.  IEEE Trans. Elec. Dev. 56(8), 1674 (2009)
   \centering
   %\includesvg[width=\textwidth, svgpath=images/]{HyperFETConstruction}
   \includegraphics[width=\textwidth]{images/HyperFETConstruction}
-  \caption{Some caption}
+  \caption{This work combines a generic (a) short channel transistor model with (b) a piecewise linear model for the phase-change material. (c) A numerical solution to the simple circuit shows the the hysteretic but steep HyperFET.  The size/position of this hysteresis, as well as the behavior in subthreshold and inversion can be expressed analytically.}
   \label{fig:HyperFETConstruction}
 \end{figure}
 \begin{figure}[!ht]
   \centering
-  %\includesvg[width=\textwidth, svgpath=images/]{HyperFETConstruction}
+  \vspace{-2em}
   \includegraphics[width=\textwidth]{images/HFvsGeo}
-  \caption{Some caption}
+  \caption{(a) Increasing resistor cross-section elevates the hysteresis; inset shows the lower-left hysteretic-boundary current versus cross-section analytically approximated (solid line) and numerically extracted (dots). (b) Increasing resistor length broadens the hysteresis to the right; inset shows right hysteretic-boundary voltage versus length analytically approximated (solid line) and numerically extracted (dots).  Red hatch indicates where instability rather than hysteresis emerges for short resistors.  Other insets repeat main figure with off-currents matched.}
   \label{fig:HFvsGeo}
 \end{figure}
 
-
-% A figure containing two graphics in minipages
-%\begin{figure}[!ht]
-%  \centering
-%  \begin{minipage}[t]{.49\textwidth}
-%    \includegraphics[width=\textwidth]{images/Fig1}
-%    \caption{This is an example figure to show one method for creating the figures on this page.  Two minipages just smaller than half the pagewidth are placed in one ``figure'' environment.  Each minipage holds one graphic/caption, and the two are horizontally stacked.}
-%    \label{fig:CNT}
-%  \end{minipage}
-%\hfill
-%  \begin{minipage}[t]{.49\textwidth}
-%    \includegraphics[width=\textwidth]{images/Fig2}
-%    \caption{Of course, seeing as this \textit{is} LaTeX, there are many different methods you could use for placing/aligning figures if you want to get more precise.  For starters, check out  \url{http://tex.stackexchange.com/a/148445/39047} or \url{https://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions}.}
-%    \label{fig:channel}
-%  \end{minipage}
-%\end{figure}
-
-% A plain old figure
-%\begin{figure}[!ht]
-%  \centering
-%    \includegraphics[width=\textwidth]{images/Fig3}
-%    \caption{Of course, you don't have to get fancy.  Here's a basic figure just spanning the width of the page.  But do notice the individually labelled subparts, and the fact that there is no more text on this page beyond captions.}
-%    \label{fig:length}
-%\end{figure}
-
+\begin{figure}[!ht]
+  \centering
+  \vspace{-2em}
+  \includegraphics[width=\textwidth]{images/Opt}
+  \caption{(a) Increasing resistor length increases the ``shifting gain'' of the HyperFET configuration computed analytically (solid) and numerically extracted (dots). Black hatch indicates where the $V_\mathrm{IMT}$ becomes too large to operate under $V_\mathrm{DD}$.  Dotted lines express a safety margin for the left boundary of hysteresis: when negative, the hysteresis includes $V_\mathrm{GS}=0$ so the device is inoperable. (b) Decreasing the cross-section increases the ``shifting gain.'' Dotted lines express a safety margin for the right hysteretic boundary: when negative, the hysteresis includes $V_\mathrm{GS}=V_\mathrm{DD}$ so the device is inoperable. (c) The analytic expressions suggest a gain optimization for the HyperFET given some chosen safety margins.}
+  \label{fig:Opt}
+\end{figure}
 
 % Thank you for your abstract!
 \end{document}

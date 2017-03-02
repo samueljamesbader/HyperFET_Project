@@ -366,9 +366,9 @@ This derivation does have one (correctable) caveat: as $V_\mathrm{right}$ pushes
   l=\frac{\VDD-\Vth/2}{J_\mathrm{IMT}\pins}
   \label{eq:lmax}
 \end{equation}
-The proper $l$ to use is the minimum of those suggested by \eqref{eq:lopt} and \eqref{eq:lmax}.
+The proper $l$ to use is the minimum of those suggested by \eqref{eq:lopt} and \eqref{eq:lmax}.  Experience thus far suggests that \eqref{eq:lmax} typically sets the minimum unless a very large safety margin $M_r$ (see below) is chosen.
 
-As a practical concern of course, one may not wish to set the boundary of the hysteresis right at \VDD\ and 0, since these are the operating points.  It's easy to plug a safety margin into these formulas by replacing $\VDD$ with $\VDD-M_r\Vth$ in \eqref{eq:lopt}, where $M_r$ is a quantity of order unity chosen by the reliability engineer.  This does not change the exactness of the solution.  One could also, to reasonable approximation, multiply $wt$ by a safety factor $M_l$ (which increases $I_\mathrm{left}$ by the same factor), and then plug back into \eqref{eq:Vright_geom_ext} to resolve for $l$.  (In principle, this should process should be iterated to solve $l$ and $wt$ simultaneously, but at the precision of this discussion, one iteration is generally sufficient.)
+As a practical concern of course, one may not wish to set the boundary of the hysteresis right at \VDD\ and 0, since these are the operating points.  It's easy to plug a safety margin into these formulas by replacing $\VDD$ with $\VDD-M_r\Vth$ in \eqref{eq:lopt}, where $M_r$ is a quantity of order unity chosen by the reliability engineer.  This does not change the exactness of the solution.  One could also, to reasonable approximation, multiply $wt$ by a safety factor $M_l+1$ (which increases $I_\mathrm{left}$ by the same factor and $M_l$ is of order unity) and then plug back into \eqref{eq:Vright_geom_ext} to resolve for $l$.  (In principle, this should process should be iterated to solve $l$ and $wt$ simultaneously, but at the precision of this discussion, one iteration is generally sufficient.)
 
 %\section{Device considerations}
 %Given the above expressions, we now analyze the effect of the PCR on $V_\mathrm{on}$ and $I_\mathrm{on}/I_\mathrm{off}$.  We begin with some basic observations of the HyperFET I-V and how they shape the design space for a steep-switching device.
